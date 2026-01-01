@@ -10,7 +10,6 @@ import { alatPayRoutes } from './routes/alatPayRoutes.js'
 import initializeSocket from './socket/index.js'
 import passport from 'passport'
 import prisma from '../prisma/prisma.js'
-
 import session from 'express-session'
 
 // import admin from 'firebase-admin'

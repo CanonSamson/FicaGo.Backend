@@ -1,20 +1,9 @@
 // custom-types.d.ts
+import { Request } from 'express'
 
 declare module 'express-serve-static-core' {
   interface Request {
     id?: string
-    role?: "PATIENT" | "DOCTOR"
-    channelRoles?: string[]
+    role?: 'VENDOR' | 'USER'
   }
-}
-
-
-declare module 'node-schedule' {
-  export interface Job {
-    cancel(): boolean
-  }
-  export function scheduleJob(
-    date: Date,
-    callback: (fireDate: Date) => void
-  ): Job
 }

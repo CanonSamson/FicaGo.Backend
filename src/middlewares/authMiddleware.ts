@@ -18,10 +18,10 @@ export const verifyUserToken = async (
     const secretKey = process.env.JWT_SECRET_KEY  as string
     const decoded = jwt.verify(token, secretKey) as {
       id: string
-      role: 'PATIENT' | 'DOCTOR'
+      role: 'VENDOR' | 'USER'
     }
-    req.id = decoded.id // Attach user data (id) to the request object
-    req.role = decoded.role as 'PATIENT' | 'DOCTOR' // Attach user data (id) to the request object
+    req.id = decoded.id 
+    req.role = decoded.role as 'VENDOR' | 'USER' 
     next() // Proceed to the next middleware or route handler
   } catch (error) {
     res.status(401).json({ message: 'Invalid or expired token' })
