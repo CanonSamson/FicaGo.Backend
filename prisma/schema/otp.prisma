@@ -1,0 +1,11 @@
+model Otp {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  phoneNumber String
+  otp         String
+  type        String   // e.g., "onboarding", "login", "forget"
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([phoneNumber, type])
+}

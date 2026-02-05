@@ -1,0 +1,12 @@
+model Plan {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  price     Float
+  currency  String   @default("NGN")
+  interval  String
+  features  String[]
+  isPopular Boolean  @default(false)
+  role      String   @default("VENDOR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

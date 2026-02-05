@@ -1,0 +1,12 @@
+model Vendor {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  firstName       String
+  lastName        String
+  email           String   @unique
+  businessType    String
+  mobileNumber    String
+  serviceCategory String
+  skills          String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

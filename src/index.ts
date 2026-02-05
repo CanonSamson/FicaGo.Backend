@@ -7,6 +7,9 @@ import morgan from 'morgan'
 import { Server } from 'socket.io'
 import logger from './utils/logger.js'
 import { alatPayRoutes } from './routes/alatPayRoutes.js'
+import { vendorOnboardingRoutes } from './routes/vendor/VendorOnBoardingRoutes.js'
+import { otpRoutes } from './routes/ekyc/otpRoutes.js'
+import { seedPlans } from './seeders/planSeeder.js'
 import initializeSocket from './socket/index.js'
 import passport from 'passport'
 import prisma from '../prisma/prisma.js'
@@ -104,6 +107,8 @@ async function startServer () {
 
     // Setup routes
     app.use('/v1/api/payments/alatpay', alatPayRoutes)
+    app.use('/v1/api/vendor', vendorOnboardingRoutes)
+    app.use('/v1/api/ekyc', otpRoutes)
 
     app.get('/health', healthCheck)
     app.get('/', (_req, res) => {
@@ -135,6 +140,9 @@ async function startServer () {
 
     await prisma.$connect()
     console.log('Successfully connected to database')
+
+    // Run seeders
+    await seedPlans()
 
     // Start server
     server.listen(PORT, () => {
