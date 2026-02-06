@@ -1,5 +1,5 @@
-import jwt from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
+import { jwtService } from '../services/jwt/jwtService.js'
 
 // Middleware to check if the user's token is verified
 export const verifyUserToken = async (
@@ -15,13 +15,10 @@ export const verifyUserToken = async (
   }
 
   try {
-    const secretKey = process.env.JWT_SECRET_KEY  as string
-    const decoded = jwt.verify(token, secretKey) as {
-      id: string
-      role: 'VENDOR' | 'USER'
-    }
+    const decoded = jwtService.verifyToken(token)
     req.id = decoded.id 
-    req.role = decoded.role as 'VENDOR' | 'USER' 
+    req.role = decoded.role
+    req.plan = decoded.plan
     next() // Proceed to the next middleware or route handler
   } catch (error) {
     res.status(401).json({ message: 'Invalid or expired token' })

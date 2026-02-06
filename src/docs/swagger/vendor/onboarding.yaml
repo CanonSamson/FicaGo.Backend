@@ -1,0 +1,106 @@
+paths:
+  /vendor/onboard:
+    post:
+      summary: Onboard a new vendor
+      tags: [Vendor]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - businessType
+                - mobileNumber
+                - serviceCategory
+              properties:
+                firstName:
+                  type: string
+                  example: 'John'
+                lastName:
+                  type: string
+                  example: 'Doe'
+                email:
+                  type: string
+                  format: email
+                  example: 'john.doe@example.com'
+                businessType:
+                  type: string
+                  example: 'Sole Proprietorship'
+                mobileNumber:
+                  type: number
+                  example: 1234567890
+                serviceCategory:
+                  type: string
+                  example: 'Plumbing'
+                skills:
+                  type: array
+                  items:
+                    type: string
+                  example: ['Pipe fitting', 'Leak repair']
+      responses:
+        201:
+          description: Vendor onboarded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Vendor onboarded successfully'
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
+                      email:
+                        type: string
+                      businessType:
+                        type: string
+                      mobileNumber:
+                        type: string
+                      serviceCategory:
+                        type: string
+                      skills:
+                        type: array
+                        items:
+                          type: string
+        409:
+          description: Vendor already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Vendor with this email already exists'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Failed to onboard vendor'
+                  error:
+                    type: object

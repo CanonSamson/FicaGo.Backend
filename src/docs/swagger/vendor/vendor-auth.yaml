@@ -1,0 +1,228 @@
+paths:
+  /vendor/login/send-otp:
+    post:
+      summary: Send vendor login OTP
+      description: Generates a 6-digit OTP for an existing vendor identified by phone number.
+      tags: [Vendor Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendOtpRequest'
+            examples:
+              valid:
+                value:
+                  phoneNumber: 8012345678
+      responses:
+        200:
+          description: OTP generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendOtpResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "OTP generated successfully"
+                    data:
+                      otp: "123456"
+                      phoneNumber: "08012345678"
+        400:
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingPhone:
+                  value:
+                    success: false
+                    message: "Phone number is required"
+        404:
+          description: Vendor not found with this phone number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  value:
+                    success: false
+                    message: "Vendor not found with this phone number"
+        500:
+          description: Server error generating OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /vendor/login/verify-otp:
+    post:
+      summary: Verify OTP and login vendor
+      description: Verifies the OTP and returns a JWT token with vendor details.
+      tags: [Vendor Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOtpRequest'
+            examples:
+              valid:
+                value:
+                  phoneNumber: 8012345678
+                  otp: "123456"
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyOtpResponse'
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: "Login successful"
+                    data:
+                      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      vendor:
+                        id: "507f1f77bcf86cd799439011"
+                        firstName: "Jane"
+                        lastName: "Doe"
+                        email: "jane.doe@example.com"
+                        mobileNumber: "08012345678"
+                        businessType: "Plumbing"
+        400:
+          description: Invalid OTP or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid:
+                  value:
+                    success: false
+                    message: "Invalid OTP"
+                expired:
+                  value:
+                    success: false
+                    message: "OTP has expired"
+        404:
+          description: Vendor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  value:
+                    success: false
+                    message: "Vendor not found"
+        500:
+          description: Server error verifying OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    SendOtpRequest:
+      type: object
+      required:
+        - phoneNumber
+      properties:
+        phoneNumber:
+          type: number
+          description: Vendor's phone number registered during onboarding
+          example: 8012345678
+
+    VerifyOtpRequest:
+      type: object
+      required:
+        - phoneNumber
+        - otp
+      properties:
+        phoneNumber:
+          type: number
+          description: Vendor's phone number registered during onboarding
+          example: 8012345678
+        otp:
+          type: string
+          description: 6-digit OTP sent to the vendor's phone number
+          example: "123456"
+
+    Vendor:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Vendor unique identifier
+          example: "507f1f77bcf86cd799439011"
+        firstName:
+          type: string
+          example: "Jane"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "jane.doe@example.com"
+        mobileNumber:
+          type: string
+          example: "08012345678"
+        businessType:
+          type: string
+          example: "Plumbing"
+
+    SendOtpResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "OTP generated successfully"
+        data:
+          type: object
+          properties:
+            otp:
+              type: string
+              example: "123456"
+            phoneNumber:
+              type: string
+              example: "08012345678"
+
+    VerifyOtpResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login successful"
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: JWT token for authenticated vendor
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            vendor:
+              $ref: '#/components/schemas/Vendor'
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"

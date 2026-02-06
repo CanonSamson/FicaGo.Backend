@@ -5,5 +5,6 @@ declare module 'express-serve-static-core' {
   interface Request {
     id?: string
     role?: 'VENDOR' | 'USER'
+    plan?: 'FREE' | 'PRO' | 'ENTERPRISE'
   }
 }

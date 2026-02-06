@@ -9,11 +9,14 @@ import logger from './utils/logger.js'
 import { alatPayRoutes } from './routes/alatPayRoutes.js'
 import { vendorOnboardingRoutes } from './routes/vendor/VendorOnBoardingRoutes.js'
 import { otpRoutes } from './routes/ekyc/otpRoutes.js'
+import { planRoutes } from './routes/planRoutes.js'
 import { seedPlans } from './seeders/planSeeder.js'
 import initializeSocket from './socket/index.js'
 import passport from 'passport'
 import prisma from '../prisma/prisma.js'
 import session from 'express-session'
+import swaggerUi from 'swagger-ui-express'
+import { specs } from './config/swagger.js'
 
 // import admin from 'firebase-admin'
 
@@ -53,6 +56,8 @@ const errorHandler = (
   res.status(500).json({ error: 'Internal server error' })
 }
 
+
+
 // Health check route handler
 const healthCheck = async (_req: express.Request, res: express.Response) => {
   try {
@@ -83,7 +88,7 @@ async function startServer () {
   try {
     const app = express()
 
-    const PORT = process.env.PORT
+    const PORT = process.env.PORT 
 
     // Apply middleware
     app.use(loggingMiddleware)
@@ -92,7 +97,7 @@ async function startServer () {
     app.use(express.json({ limit: '100mb' }))
     app.use(express.urlencoded({ limit: '100mb', extended: true }))
 
-    dotenv.config()
+     dotenv.config()
 
     // Create HTTP server and Socket.IO instance
     const server = http.createServer(app)
@@ -105,15 +110,15 @@ async function startServer () {
     // Initialize socket handlers
     initializeSocket(io)
 
+    // Swagger API Documentation
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs))
+
     // Setup routes
     app.use('/v1/api/payments/alatpay', alatPayRoutes)
     app.use('/v1/api/vendor', vendorOnboardingRoutes)
     app.use('/v1/api/ekyc', otpRoutes)
-
+    app.use('/v1/api/plans', planRoutes)
     app.get('/health', healthCheck)
-    app.get('/', (_req, res) => {
-      res.json({ message: ' Service is running!' })
-    })
 
     app.use(
       session({
@@ -139,7 +144,15 @@ async function startServer () {
     setupCleanupHandlers()
 
     await prisma.$connect()
-    console.log('Successfully connected to database')
+    try {
+      await prisma.$runCommandRaw({ ping: 1 })
+      console.log('Successfully connected to database')
+    } catch (err) {
+      logger.error('Database authentication failed. Please check your DATABASE_URL in .env', {
+        DATABASE_URL: process.env.DATABASE_URL
+      })
+      throw err
+    }
 
     // Run seeders
     await seedPlans()

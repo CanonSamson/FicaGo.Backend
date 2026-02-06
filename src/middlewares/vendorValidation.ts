@@ -7,7 +7,7 @@ const vendorOnboardingSchema = z.object({
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Valid email is required'),
   businessType: z.string().min(1, 'Business type is required'),
-  mobileNumber: z.string().min(1, 'Mobile number is required'),
+  mobileNumber: z.number().int().transform((val) => val.toString()),
   serviceCategory: z.string().min(1, 'Service category is required'),
   skills: z.array(z.string()).min(1, 'At least one skill is required')
 })
