@@ -53,3 +53,143 @@ paths:
           description: Invalid OTP or expired
         500:
           description: Server error
+
+  /ekyc/check-user:
+    post:
+      summary: Check if a user exists
+      description: Check vendor existence by email or phone number.
+      tags: [EKYC]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [email]
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                    phoneNumber:
+                      type: string
+                - type: object
+                  required: [phoneNumber]
+                  properties:
+                    phoneNumber:
+                      type: string
+                    email:
+                      type: string
+                      format: email
+              description: Provide either email or phoneNumber.
+            examples:
+              byEmail:
+                summary: Check by email
+                value:
+                  email: user@example.com
+              byPhone:
+                summary: Check by phone number
+                value:
+                  phoneNumber: "08031234567"
+              both:
+                summary: Check by both email and phone number
+                value:
+                  email: vendor@example.com
+                  phoneNumber: "2348012345678"
+      responses:
+        200:
+          description: Existence check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EkycCheckUserResponse'
+              examples:
+                existsByEmail:
+                  value:
+                    data:
+                      exists: true
+                      field: email
+                    error: null
+                    message: User exists
+                    code: 200
+                notExists:
+                  value:
+                    data:
+                      exists: false
+                    error: null
+                    message: User does not exist
+                    code: 200
+        400:
+          description: Missing credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EkycErrorResponse'
+              examples:
+                missingCredentials:
+                  value:
+                    data: null
+                    error: "Missing credentials"
+                    message: "Email or phone number is required"
+                    code: 400
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EkycErrorResponse'
+              examples:
+                serverError:
+                  value:
+                    data: null
+                    error: "Unexpected error"
+                    message: "Internal server error"
+                    code: 500
+
+components:
+  schemas:
+    EkycCheckUserResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            exists:
+              type: boolean
+            field:
+              type: string
+              enum: [email, phoneNumber]
+          required:
+            - exists
+        error:
+          type: string
+          nullable: true
+        message:
+          type: string
+        code:
+          type: integer
+          format: int32
+      required:
+        - data
+        - error
+        - message
+        - code
+    EkycErrorResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          nullable: true
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: integer
+          format: int32
+      required:
+        - data
+        - error
+        - message
+        - code

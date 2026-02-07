@@ -1,8 +1,8 @@
-import asyncWrapper from "../../../middlewares/asyncWrapper.js";
-import logger from "../../../utils/logger.js";
-import prisma from "../../../../prisma/prisma.js";
-import { sendEmail } from "../../../services/emailService.js";
-import { jwtService, TokenPayload } from "../../../services/jwt/jwtService.js";
+import asyncWrapper from '../../../middlewares/asyncWrapper.js'
+import logger from '../../../utils/logger.js'
+import prisma from '../../../../prisma/prisma.js'
+import { sendEmail } from '../../../services/emailService.js'
+import { jwtService, TokenPayload } from '../../../services/jwt/jwtService.js'
 
 export const onBoardVendor = asyncWrapper(async (req, res) => {
   const {
@@ -12,21 +12,21 @@ export const onBoardVendor = asyncWrapper(async (req, res) => {
     businessType,
     mobileNumber,
     serviceCategory,
-    skills,
-  } = req.body;
+    skills
+  } = req.body
 
   try {
     // Check if vendor already exists
     const existingVendor = await prisma.vendor.findUnique({
-      where: { email },
-    });
+      where: { email }
+    })
 
     if (existingVendor) {
-      logger.warn("Vendor onboarding failed: Vendor already exists", { email });
+      logger.warn('Vendor onboarding failed: Vendor already exists', { email })
       return res.status(409).json({
         success: false,
-        message: "Vendor with this email already exists",
-      });
+        message: 'Vendor with this email already exists'
+      })
     }
 
     // Create new vendor
@@ -38,22 +38,22 @@ export const onBoardVendor = asyncWrapper(async (req, res) => {
         businessType,
         mobileNumber,
         serviceCategory,
-        skills,
-      },
-    });
+        skills
+      }
+    })
 
-    logger.info("Successfully onboarded vendor", {
+    logger.info('Successfully onboarded vendor', {
       vendorId: newVendor.id,
-      email,
-    });
+      email
+    })
 
     // Generate JWT token
     const tokenPayload: TokenPayload = {
       id: newVendor.id,
-      role: "VENDOR",
-      plan: "FREE", // Default plan for new vendors
-    };
-    const token = jwtService.generateToken(tokenPayload);
+      role: 'VENDOR',
+      plan: 'FREE' // Default plan for new vendors
+    }
+    const token = jwtService.generateToken(tokenPayload)
 
     // Send welcome email (fire and forget or await depending on requirement, using await for reliability here)
     try {
@@ -66,29 +66,32 @@ export const onBoardVendor = asyncWrapper(async (req, res) => {
       //         // Add other placeholders if the template expects them
       //     }
       // )
-      logger.debug("Welcome email sent to vendor", { email });
+      logger.debug('Welcome email sent to vendor', { email })
     } catch (emailError) {
       // Don't fail the request if email fails, just log it
-      logger.error("Failed to send welcome email to vendor", {
+      logger.error('Failed to send welcome email to vendor', {
         email,
-        error: emailError,
-      });
+        error: emailError
+      })
     }
 
     res.status(201).json({
       success: true,
       data: {
         token,
-        vendor: newVendor,
-      },
-    });
+        vendor: newVendor
+      }
+    })
   } catch (error) {
-    logger.error("Failed to onboard vendor", {
+    logger.error('Failed to onboard vendor', {
       error,
-      body: req.body,
-    });
+      body: req.body
+    })
     res
       .status(500)
-      .json({ success: false, message: "Failed to onboard vendor", error });
+      .json({ success: false, message: 'Failed to onboard vendor', error })
   }
-});
+})
+
+
+

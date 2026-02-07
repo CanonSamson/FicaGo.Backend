@@ -12,4 +12,6 @@ router.post('/onboard', validateVendorOnboarding, onBoardVendor)
 router.post('/login/send-otp', sendLoginOtp)
 router.post('/login/verify-otp', verifyLoginOtp)
 
+
+
 export { router as vendorOnboardingRoutes }

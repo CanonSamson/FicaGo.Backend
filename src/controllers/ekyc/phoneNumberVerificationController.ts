@@ -3,6 +3,7 @@ import logger from "../../utils/logger.js";
 import prisma from "../../../prisma/prisma.js";
 import { generateOTP } from "../../utils/generateOTP.js";
 import moment from "moment";
+import { ekycService } from "../../services/ekycService.js";
 
 export const sendOtp = asyncWrapper(async (req, res) => {
   const { phoneNumber, type } = req.body;
@@ -12,6 +13,33 @@ export const sendOtp = asyncWrapper(async (req, res) => {
       success: false,
       message: "Phone number and type are required",
     });
+  }
+
+  // Check if user exists based on type
+  if (type === 'VENDOR_REGISTRATION' || type === 'VENDOR_LOGIN') {
+    const userCheck = await ekycService.checkUserExists(undefined, phoneNumber)
+    
+    if (userCheck.code !== 200) {
+      return res.status(userCheck.code).json({
+         success: false,
+         message: userCheck.message,
+         error: userCheck.error
+      })
+    }
+
+    if (type === 'VENDOR_REGISTRATION' && userCheck.data?.exists) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this phone number already exists'
+      })
+    }
+
+    if (type === 'VENDOR_LOGIN' && !userCheck.data?.exists) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this phone number does not exist'
+      })
+    }
   }
 
   try {
