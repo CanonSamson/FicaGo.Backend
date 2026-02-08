@@ -18,6 +18,7 @@ import swaggerUi from "swagger-ui-express";
 import { specs } from "./config/swagger.js";
 import { vendorPlansRoutes } from "./routes/vendor/vendorPlansRoutes.js";
 import vendorOnboardingRoutes from "./routes/vendor/vendorOnBoardingRoutes.js";
+import { webhookRoutes } from "./routes/webhook.js";
 
 // import admin from 'firebase-admin'
 
@@ -119,6 +120,7 @@ async function startServer() {
     app.use("/v1/api/ekyc", otpRoutes);
     app.use("/v1/api/plans", planRoutes);
     app.get("/health", healthCheck);
+    app.use("/v1/api/webhook", webhookRoutes);
 
     app.use(
       session({

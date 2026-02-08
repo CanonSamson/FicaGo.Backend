@@ -1,0 +1,187 @@
+paths:
+  /webhook:
+    post:
+      summary: Flutterwave webhook
+      description: Receives payment events from Flutterwave to update transaction status and store webhook metadata.
+      tags: [Webhook]
+      security: []
+      parameters:
+        - in: header
+          name: verif-hash
+          description: Flutterwave webhook verification hash. Required for signature validation.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlutterwaveWebhookPayload'
+            examples:
+              chargeCompleted:
+                summary: Successful charge completed event
+                value:
+                  event: charge.completed
+                  data:
+                    id: 123456789
+                    tx_ref: TX-20260208-ABC123
+                    amount: 5000
+                    currency: NGN
+                    status: successful
+                    customer:
+                      email: customer@example.com
+                      name: Jane Doe
+                      phone_number: '08031234567'
+                    created_at: '2026-02-08T12:34:56Z'
+      responses:
+        200:
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSuccessResponse'
+              examples:
+                ok:
+                  value:
+                    success: true
+        400:
+          description: Invalid webhook signature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookErrorResponse'
+              examples:
+                invalidSignature:
+                  value:
+                    error: Invalid webhook signature
+        500:
+          description: Webhook processing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookErrorResponse'
+              examples:
+                processingFailed:
+                  value:
+                    error: Webhook processing failed
+
+  /webhook/failed:
+    post:
+      summary: Flutterwave webhook (failed fallback)
+      description: Fallback endpoint for failed webhook deliveries. Processes payloads identically to the primary webhook.
+      tags: [Webhook]
+      security: []
+      parameters:
+        - in: header
+          name: verif-hash
+          description: Flutterwave webhook verification hash. Required for signature validation.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlutterwaveWebhookPayload'
+            examples:
+              chargeCompletedFailedRetry:
+                summary: Retry of charge completed event
+                value:
+                  event: charge.completed
+                  data:
+                    id: 987654321
+                    tx_ref: TX-20260208-XYZ789
+                    amount: 10000
+                    currency: NGN
+                    status: successful
+                    customer:
+                      email: user@example.com
+                      name: John Doe
+                    created_at: '2026-02-08T15:00:00Z'
+      responses:
+        200:
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSuccessResponse'
+        400:
+          description: Invalid webhook signature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookErrorResponse'
+        500:
+          description: Webhook processing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookErrorResponse'
+
+components:
+  schemas:
+    FlutterwaveWebhookPayload:
+      type: object
+      required:
+        - event
+        - data
+      properties:
+        event:
+          type: string
+          description: Event name from Flutterwave (e.g., charge.completed)
+        data:
+          type: object
+          required:
+            - id
+            - tx_ref
+            - amount
+            - currency
+            - status
+            - customer
+            - created_at
+          properties:
+            id:
+              type: integer
+              format: int64
+            tx_ref:
+              type: string
+              description: Merchant transaction reference used during initialization
+            amount:
+              type: number
+              format: float
+            currency:
+              type: string
+              example: NGN
+            status:
+              type: string
+              description: Flutterwave transaction status
+              enum: [successful, failed]
+            customer:
+              type: object
+              required: [email, name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                phone_number:
+                  type: string
+                  nullable: true
+            created_at:
+              type: string
+              format: date-time
+    WebhookSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+    WebhookErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
