@@ -27,7 +27,7 @@ export const initiatePlanPayment = asyncWrapper(
       }
 
       const plan = await prisma.plan.findUnique({ where: { id: planId } });
-      if (!plan) {
+      if (!plan || !plan.externalPlanId) {
         res.status(404).json({ success: false, message: "Plan not found" });
         return;
       }
@@ -80,8 +80,9 @@ export const initiatePlanPayment = asyncWrapper(
         customerName: `${vendor.firstName} ${vendor.lastName}`,
         customerPhone: vendor.mobileNumber,
         tenantId: vendor.id, // Using vendorId as tenantId
-        redirectUrl: `${process.env.FRONTEND_URL}/payment/callback`, // Needs proper config
+        redirectUrl: `${process.env.FRONTEND_URL}/payment/callback`,
         reference: orderId,
+        payment_plan: plan.externalPlanId,
         title: `Subscription to ${plan.name}`,
         description: description,
         metadata: {

@@ -13,6 +13,7 @@ export interface PaymentInitializationData {
   customerPhone?: string
   tenantId: string
   redirectUrl: string
+  payment_plan?: string
   metadata?: Record<string, any>
   reference?: string
   title?: string

@@ -7,6 +7,7 @@ model Plan {
   features            String[]
   isPopular           Boolean              @default(false)
   role                String               @default("VENDOR")
+  externalPlanId      String?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   vendors             Vendor[]
