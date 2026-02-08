@@ -14,4 +14,4 @@ router.post('/login/verify-otp', verifyLoginOtp)
 
 
 
-export { router as vendorOnboardingRoutes }
+export default router

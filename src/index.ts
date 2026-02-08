@@ -16,8 +16,8 @@ import prisma from "../prisma/prisma.js";
 import session from "express-session";
 import swaggerUi from "swagger-ui-express";
 import { specs } from "./config/swagger.js";
-import { vendorOnboardingRoutes } from "./routes/vendor/vendorOnBoardingRoutes.js";
 import { vendorPlansRoutes } from "./routes/vendor/vendorPlansRoutes.js";
+import vendorOnboardingRoutes from "./routes/vendor/vendorOnBoardingRoutes.js";
 
 // import admin from 'firebase-admin'
 
