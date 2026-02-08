@@ -2,6 +2,7 @@ import prisma from '../../prisma/prisma.js'
 import logger from '../utils/logger.js'
 
 export interface ServiceResponse {
+  success: boolean
   data: any
   error: any
   message?: string
@@ -13,6 +14,7 @@ export class EkycService {
     try {
       if (!email && !phoneNumber) {
         return {
+          success: false,
           data: null,
           error: 'Missing credentials',
           message: 'Email or phone number is required',
@@ -37,6 +39,7 @@ export class EkycService {
 
       if (user) {
         return {
+          success: true,
           data: {
             exists: true,
             field: user.email === email ? 'email' : 'phoneNumber'
@@ -48,6 +51,7 @@ export class EkycService {
       }
 
       return {
+        success: true,
         data: {
           exists: false
         },
@@ -58,6 +62,7 @@ export class EkycService {
     } catch (error) {
       logger.error('Check user existence failed', { error })
       return {
+        success: false,
         data: null,
         error: error instanceof Error ? error.message : 'Unknown error',
         message: 'Internal server error',

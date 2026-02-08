@@ -1,0 +1,15 @@
+model VendorSubscription {
+    id         String    @id @default(auto()) @map("_id") @db.ObjectId
+    vendorId   String    @db.ObjectId
+    vendor     Vendor    @relation(fields: [vendorId], references: [id])
+    planId     String    @db.ObjectId
+    plan       Plan      @relation(fields: [planId], references: [id])
+    status     String
+    startedAt  DateTime  @default(now())
+    expiresAt  DateTime?
+    canceledAt DateTime?
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+
+    @@index([vendorId])
+}

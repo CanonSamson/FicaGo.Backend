@@ -1,0 +1,22 @@
+model transaction {
+    id                String  @id @default(auto()) @map("_id") @db.ObjectId
+    uuid              String?
+    userId            String
+    amount            Float
+    type              String
+    status            String
+    reference         String?
+    currency          String
+    description       String?
+    paymentType       String?
+    metadata          Json?
+    transactionType   String?
+    externalReference String?
+    gateway           String?
+    chargeAmount      Float?  @default(0.00)
+
+    // Link to new accounting system
+    transactionId String? // Links to Transaction.id
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @default(now()) @updatedAt
+}

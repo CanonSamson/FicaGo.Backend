@@ -7,7 +7,7 @@ let onlineUsers: {
 export default (
   io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>
 ) => {
-  console.log('socket init...')
+  console.log('socket.io initialized')
   io.on('connection', socket => {
     const rawUserId = socket.handshake.query.userId
     const userId = typeof rawUserId === 'string' && rawUserId.trim().length > 0 ? rawUserId.trim() : undefined
