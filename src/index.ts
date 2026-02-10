@@ -19,6 +19,7 @@ import { specs } from "./config/swagger.js";
 import { vendorPlansRoutes } from "./routes/vendor/vendorPlansRoutes.js";
 import vendorOnboardingRoutes from "./routes/vendor/vendorOnBoardingRoutes.js";
 import { webhookRoutes } from "./routes/webhook.js";
+import { vendorRoutes } from "./routes/vendor/vendorRoutes.js";
 
 // import admin from 'firebase-admin'
 
@@ -116,6 +117,7 @@ async function startServer() {
     // Setup routes
     app.use("/v1/api/payments/alatpay", alatPayRoutes);
     app.use("/v1/api/vendor", vendorOnboardingRoutes);
+    app.use("/v1/api/vendor", vendorRoutes);
     app.use("/v1/api/vendor", vendorPlansRoutes);
     app.use("/v1/api/ekyc", otpRoutes);
     app.use("/v1/api/plans", planRoutes);
