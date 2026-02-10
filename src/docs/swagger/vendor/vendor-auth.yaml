@@ -151,6 +151,29 @@ paths:
                     example: "Vendor profile fetched successfully"
                   data:
                     $ref: '#/components/schemas/Vendor'
+              examples:
+                withCurrentPlan:
+                  value:
+                    success: true
+                    message: "Vendor profile fetched successfully"
+                    data:
+                      id: "507f1f77bcf86cd799439011"
+                      firstName: "Jane"
+                      lastName: "Doe"
+                      email: "jane.doe@example.com"
+                      mobileNumber: "08012345678"
+                      businessType: "Plumbing"
+                      currentPlan:
+                        id: "60d0fe4f5311236168a109ca"
+                        name: "Basic Plan"
+                        price: 0
+                        currency: "NGN"
+                        interval: "monthly"
+                        features: ["Basic feature 1", "Basic feature 2"]
+                        isPopular: false
+                        role: "VENDOR"
+                        createdAt: "2026-02-08T12:34:56Z"
+                        updatedAt: "2026-02-08T12:34:56Z"
         401:
           description: Unauthorized - Token missing or invalid
           content:
@@ -173,6 +196,17 @@ paths:
                   value:
                     success: false
                     message: "Vendor not found"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serverError:
+                  value:
+                    success: false
+                    message: "Failed to fetch vendor profile"
 
 components:
   schemas:
@@ -224,6 +258,15 @@ components:
         businessType:
           type: string
           example: "Plumbing"
+        currentPlan:
+          $ref: '#/components/schemas/VendorPlan'
+          nullable: true
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - mobileNumber
 
     SendOtpResponse:
       type: object
@@ -272,3 +315,38 @@ components:
         message:
           type: string
           example: "Error message"
+    VendorPlan:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "60d0fe4f5311236168a109ca"
+        name:
+          type: string
+          example: "Basic Plan"
+        price:
+          type: number
+          example: 0
+        currency:
+          type: string
+          example: "NGN"
+        interval:
+          type: string
+          example: "monthly"
+        features:
+          type: array
+          items:
+            type: string
+          example: ["Basic feature 1", "Basic feature 2"]
+        isPopular:
+          type: boolean
+          example: false
+        role:
+          type: string
+          example: "VENDOR"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

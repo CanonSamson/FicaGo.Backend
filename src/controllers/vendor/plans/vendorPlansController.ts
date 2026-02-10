@@ -10,32 +10,58 @@ import { PaymentInitializationData } from "../../../types/flutterwave.js";
 export const initiatePlanPayment = asyncWrapper(
   async (req: Request, res: Response) => {
     const { planId } = req.body || {};
+    const vendorId = req?.id as string;
+
+    const requestId = Math.random().toString(36).substring(7);
+
+    logger.info("Initiating vendor plan payment request", {
+      requestId,
+      vendorId,
+      planId,
+      timestamp: new Date().toISOString(),
+    });
 
     if (!planId || typeof planId !== "string") {
+      logger.warn("Initiating plan payment failed - invalid planId", {
+        requestId,
+        planId,
+      });
       res.status(400).json({ success: false, message: "planId is required" });
       return;
     }
 
     try {
-      const vendorId = req?.id as string;
       const vendor = await prisma.vendor.findUnique({
         where: { id: vendorId },
       });
       if (!vendor) {
+        logger.warn("Initiating plan payment failed - vendor not found", {
+          requestId,
+          vendorId,
+        });
         res.status(404).json({ success: false, message: "Vendor not found" });
         return;
       }
 
       const plan = await prisma.plan.findUnique({ where: { id: planId } });
       if (!plan || !plan.externalPlanId) {
+        logger.warn(
+          "Initiating plan payment failed - plan not found or invalid",
+          {
+            requestId,
+            planId,
+            externalPlanId: plan?.externalPlanId,
+          },
+        );
         res.status(404).json({ success: false, message: "Plan not found" });
         return;
       }
 
-      const orderId = `plan-${plan.id}-${vendor.id}-${Date.now()}`;
+      const orderId = `PLAN-${plan.id}-${vendor.id}-${Date.now()}`;
       const description = `Subscription to ${plan.name}`;
 
-      logger.info("Initiating vendor plan payment", {
+      logger.info("Plan details retrieved, creating transaction record", {
+        requestId,
         vendorId: vendor.id,
         planId: plan.id,
         orderId,
@@ -56,11 +82,13 @@ export const initiatePlanPayment = asyncWrapper(
         metadata: {
           planId: plan.id,
           vendorId: vendor.id,
+          requestId,
         },
       });
 
       if (!txResponse.success || !txResponse.data) {
         logger.error("Failed to create transaction record", {
+          requestId,
           vendorId: vendor.id,
           error: txResponse.error,
         });
@@ -73,6 +101,14 @@ export const initiatePlanPayment = asyncWrapper(
 
       const createdTx = txResponse.data;
 
+      logger.debug(
+        "Transaction record created, preparing Flutterwave payload",
+        {
+          requestId,
+          transactionId: createdTx.id,
+        },
+      );
+
       const paymentData: PaymentInitializationData = {
         amount: plan.price,
         currency: plan.currency || "NGN",
@@ -83,12 +119,14 @@ export const initiatePlanPayment = asyncWrapper(
         redirectUrl: `${process.env.FRONTEND_URL}/payment/callback`,
         reference: orderId,
         payment_plan: plan.externalPlanId,
+        payment_options: "card",
         title: `Subscription to ${plan.name}`,
         description: description,
         metadata: {
           vendorId: vendor.id,
           planId: plan.id,
           transactionId: createdTx.id,
+          requestId,
         },
       };
 
@@ -97,6 +135,7 @@ export const initiatePlanPayment = asyncWrapper(
         result = await flutterwaveService.initializePayment(paymentData);
       } catch (error: any) {
         logger.error("Failed to generate payment link for plan payment", {
+          requestId,
           vendorId: vendor.id,
           planId: plan.id,
           error: error.message,
@@ -116,6 +155,12 @@ export const initiatePlanPayment = asyncWrapper(
         metadata: { ...createdTx.metadata, flutterwaveData: result.data },
       });
 
+      logger.info("Payment link generated successfully", {
+        requestId,
+        transactionId: createdTx.id,
+        link: result.data.link,
+      });
+
       res.status(200).json({
         success: true,
         message: "Payment link generated successfully",
@@ -128,7 +173,9 @@ export const initiatePlanPayment = asyncWrapper(
       });
     } catch (error: any) {
       logger.error("Unexpected error initiating plan payment", {
+        requestId,
         error: error.message || error,
+        stack: error.stack,
       });
       res
         .status(500)
@@ -140,8 +187,20 @@ export const initiatePlanPayment = asyncWrapper(
 export const paymentCallback = asyncWrapper(
   async (req: Request, res: Response) => {
     const { transactionId, tx_ref } = req.body || {};
+    const requestId = Math.random().toString(36).substring(7);
+
+    logger.info("Received plan payment callback request", {
+      requestId,
+      transactionId,
+      tx_ref,
+      timestamp: new Date().toISOString(),
+    });
 
     if (!tx_ref && !transactionId) {
+      logger.warn("Callback failed - missing references", {
+        requestId,
+        body: req.body,
+      });
       res.status(400).json({
         success: false,
         message: "tx_ref or transactionId is required",
@@ -150,14 +209,20 @@ export const paymentCallback = asyncWrapper(
     }
 
     try {
-      logger.info("Received plan payment callback", { transactionId, tx_ref });
-
       let verificationData;
 
       if (tx_ref) {
+        logger.debug("Verifying payment with reference", {
+          requestId,
+          tx_ref,
+        });
         verificationData =
           await flutterwaveService.verifyPaymentWithReference(tx_ref);
       } else {
+        logger.debug("Verifying payment with transaction ID", {
+          requestId,
+          transactionId,
+        });
         // Fallback if we only have numeric transaction ID from FW (unlikely in this context but good to have)
         // But the prompt specifically asked to use verifyPaymentWithReference.
         // If we only have transactionId (numeric ID from FW), we can't use verifyPaymentWithReference easily unless we know it's a ref.
@@ -169,6 +234,7 @@ export const paymentCallback = asyncWrapper(
 
       if (!verificationData || verificationData.status !== "successful") {
         logger.warn("Callback verification failed", {
+          requestId,
           transactionId,
           tx_ref,
           status: verificationData?.status,
@@ -184,6 +250,7 @@ export const paymentCallback = asyncWrapper(
       const isValidated = status === "successful";
 
       logger.info("Plan payment status confirmed", {
+        requestId,
         tx_ref,
         transactionId,
         status,
@@ -201,7 +268,9 @@ export const paymentCallback = asyncWrapper(
       });
     } catch (error: any) {
       logger.error("Unexpected error handling payment callback", {
+        requestId,
         error: error.message || error,
+        stack: error.stack,
       });
       res
         .status(500)
@@ -269,6 +338,12 @@ export const checkPlanPaymentStatus = asyncWrapper(
         });
       }
 
+      logger.debug("Transaction record found for status check", {
+        requestId,
+        transactionId: transactionRecord.id,
+        currentStatus: transactionRecord.status,
+      });
+
       // Check if transaction is already processed
       if (
         transactionRecord.status === "SUCCESSFUL" ||
@@ -312,6 +387,11 @@ export const checkPlanPaymentStatus = asyncWrapper(
       try {
         // Use verifyPaymentWithReference as requested
         result = await flutterwaveService.verifyPaymentWithReference(txRef);
+        logger.debug("Flutterwave status check response received", {
+          requestId,
+          status: result?.status,
+          amount: result?.amount,
+        });
       } catch (error: any) {
         logger.warn(
           "Flutterwave service returned error for transaction status",
@@ -379,11 +459,42 @@ export const checkPlanPaymentStatus = asyncWrapper(
         const planId = meta?.planId;
 
         if (vendorId && planId) {
-          subscription = await subscriptionService.activateSubscription(
+          logger.info("Activating subscription for vendor", {
+            requestId,
             vendorId,
             planId,
+          });
+          try {
+            subscription = await subscriptionService.activateSubscription(
+              vendorId,
+              planId,
+              requestId,
+            );
+            logger.info("Subscription activated successfully", {
+              requestId,
+              vendorId,
+              planId,
+              subscriptionId: subscription?.id,
+            });
+          } catch (subError: any) {
+            logger.error(
+              "Failed to activate subscription after successful payment",
+              {
+                requestId,
+                vendorId,
+                planId,
+                error: subError.message,
+              },
+            );
+            // Not failing the request since payment was successful, but logging the error
+          }
+        } else {
+          logger.warn("Cannot activate subscription - missing metadata", {
             requestId,
-          );
+            vendorId,
+            planId,
+            metadata: meta,
+          });
         }
 
         res.status(200).json({
@@ -403,6 +514,13 @@ export const checkPlanPaymentStatus = asyncWrapper(
       } else {
         // Handle pending or failed status
         const currentStatus = result.status.toUpperCase();
+
+        logger.info("Transaction status check completed - not successful", {
+          requestId,
+          transactionId: transactionRecord.id,
+          status: currentStatus,
+          flutterwaveStatus: result.status,
+        });
 
         // Update DB
         await prisma.transaction.update({

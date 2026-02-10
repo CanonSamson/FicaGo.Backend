@@ -64,28 +64,28 @@ export class SubscriptionService {
       },
     });
 
-    // Send Email
-    try {
-      await sendEmail(
-        vendor.email,
-        `Subscription Confirmed: ${plan.name}`,
-        "default", // Using default template for now, or create a specific one
-        {
-          title: "Subscription Activated",
-          text: `Your subscription to ${plan.name} has been successfully activated. It will expire on ${moment(expiresAt).format("MMMM Do YYYY")}.`,
-        },
-        "ficago" as any, // Assuming 'ficago' is a valid 'from' or generic
-      );
-      logger.info("Vendor subscription email sent", {
-        requestId,
-        vendorId: vendor.id,
-      });
-    } catch (emailError) {
-      logger.error("Failed to send subscription email", {
-        requestId,
-        error: emailError,
-      });
-    }
+    // // Send Email
+    // try {
+    //   await sendEmail(
+    //     vendor.email,
+    //     `Subscription Confirmed: ${plan.name}`,
+    //     "default", // Using default template for now, or create a specific one
+    //     {
+    //       title: "Subscription Activated",
+    //       text: `Your subscription to ${plan.name} has been successfully activated. It will expire on ${moment(expiresAt).format("MMMM Do YYYY")}.`,
+    //     },
+    //     "ficago" as any, // Assuming 'ficago' is a valid 'from' or generic
+    //   );
+    //   logger.info("Vendor subscription email sent", {
+    //     requestId,
+    //     vendorId: vendor.id,
+    //   });
+    // } catch (emailError) {
+    //   logger.error("Failed to send subscription email", {
+    //     requestId,
+    //     error: emailError,
+    //   });
+    // }
 
     return subscription;
   }

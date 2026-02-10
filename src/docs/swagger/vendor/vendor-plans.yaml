@@ -1,8 +1,8 @@
 paths:
   /vendor/plans/initiate-payment:
     post:
-      summary: Initiate vendor plan payment via virtual account
-      description: Create a transaction and generate a virtual account for a vendor to subscribe to a plan via bank transfer.
+      summary: Initiate vendor plan payment
+      description: Create a transaction and generate a payment link (Flutterwave) for a vendor to subscribe to a plan.
       tags: [Vendor Plans]
       operationId: vendorInitiatePlanPayment
       security:
@@ -17,7 +17,7 @@ paths:
               planId: "60d0fe4f5311236168a109ca"
       responses:
         200:
-          description: Virtual account generated successfully
+          description: Payment link generated successfully
           content:
             application/json:
               schema:
@@ -26,32 +26,11 @@ paths:
                 success:
                   value:
                     success: true
-                    message: Virtual account generated successfully
+                    message: Payment link generated successfully
                     data:
-                      id: "va_01HZ3KJ9KJ8QW"
-                      merchantId: "m_123"
-                      virtualBankCode: "035"
-                      virtualBankAccountNumber: "1234567890"
-                      businessBankAccountNumber: null
-                      businessBankCode: "035"
-                      transactionId: "txn_01HZ3KJ9KJ8QW"
-                      status: "PENDING"
-                      expiredAt: "2026-02-10T12:00:00Z"
-                      settlementType: null
-                      createdAt: "2026-02-08T11:00:00Z"
-                      businessId: "biz_001"
-                      amount: 5000
-                      currency: "NGN"
-                      orderId: "plan-basic-ven_001-1739010000000"
-                      description: "Subscription to Basic Plan"
-                      subBusinessCode: null
-                      customer:
-                        email: "vendor@example.com"
-                        phone: "08012345678"
-                        firstName: "Ada"
-                        lastName: "Okafor"
-                        metadata: "{\"vendorId\":\"ven_001\",\"planId\":\"plan_basic\"}"
+                      link: "https://checkout.flutterwave.com/pay/abc123"
                       callbackEndpoint: "/v1/api/vendor/plans/payment-callback"
+                      transactionId: "txn_01HZ3KJ9KJ8QW"
                       reference: "plan-plan_basic-ven_001-1739010000000"
         400:
           description: Failed to initiate payment
@@ -104,7 +83,7 @@ paths:
   /vendor/plans/payment-callback:
     post:
       summary: Confirm plan payment status via callback
-      description: Verify transaction status from AlatPay and return validation details.
+      description: Verify transaction status from Flutterwave and return validation details.
       tags: [Vendor Plans]
       operationId: vendorPlanPaymentCallback
       security: []
@@ -113,7 +92,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentCallbackRequest'
+              oneOf:
+                - $ref: '#/components/schemas/PaymentCallbackRequestWithTxRef'
+                - $ref: '#/components/schemas/PaymentCallbackRequestWithTransactionId'
             example:
               transactionId: "txn_01HZ3KJ9KJ8QW"
       responses:
@@ -129,29 +110,21 @@ paths:
                     success: true
                     message: "Callback received"
                     data:
-                      status: "SUCCESSFUL"
+                      status: "successful"
                       isValidated: true
                       transaction:
-                        id: "txn_01HZ3KJ9KJ8QW"
-                        merchantId: "m_123"
-                        businessId: "biz_001"
-                        status: "SUCCESSFUL"
-                        currency: "NGN"
-                        amount: 5000
-                        orderId: "plan-plan_basic-ven_001-1739010000000"
-                        isCallbackValidated: true
-                        ngnVirtualBankAccountNumber: "1234567890"
-                        ngnVirtualBankCode: "035"
-                        nipTransaction:
-                          id: "nip_01HZ3..."
-                          transactionId: "txn_01HZ3KJ9KJ8QW"
-                          transactionStatus: "SUCCESSFUL"
-                          bankcode: "035"
-                          craccount: "1234567890"
-                        virtualAccount:
-                          id: "va_01HZ3KJ9KJ8QW"
-                          transactionId: "txn_01HZ3KJ9KJ8QW"
-                          status: "SUCCESSFUL"
+                        status: "successful"
+                        message: "Transaction fetched successfully"
+                        data:
+                          tx_ref: "plan-plan_basic-ven_001-1739010000000"
+                          amount: 5000
+                          currency: "NGN"
+                          status: "successful"
+                          customer:
+                            email: "vendor@example.com"
+                            name: "Ada Okafor"
+                            phone_number: "08012345678"
+                          created_at: "2026-02-08T12:34:56Z"
         400:
           description: Callback verification failed
           content:
@@ -188,89 +161,6 @@ components:
           type: string
           description: Unique identifier of the plan to subscribe to.
       required: [planId]
-
-    VirtualAccount:
-      type: object
-      properties:
-        id:
-          type: string
-        merchantId:
-          type: string
-        virtualBankCode:
-          type: string
-        virtualBankAccountNumber:
-          type: string
-        businessBankAccountNumber:
-          type: string
-          nullable: true
-        businessBankCode:
-          type: string
-        transactionId:
-          type: string
-        status:
-          type: string
-          description: Current status of the virtual account transaction.
-          enum: [PENDING, SUCCESSFUL, FAILED, EXPIRED]
-        expiredAt:
-          type: string
-          format: date-time
-        settlementType:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        businessId:
-          type: string
-        amount:
-          type: number
-        currency:
-          type: string
-          description: 3-letter currency code
-          example: NGN
-        orderId:
-          type: string
-        description:
-          type: string
-        subBusinessCode:
-          type: string
-          nullable: true
-        customer:
-          type: object
-          properties:
-            email:
-              type: string
-              format: email
-            phone:
-              type: string
-            firstName:
-              type: string
-            lastName:
-              type: string
-            metadata:
-              type: string
-        virtualAccountNumber:
-          type: string
-          nullable: true
-        bankName:
-          type: string
-          nullable: true
-        accountName:
-          type: string
-          nullable: true
-        expiryTime:
-          type: string
-          nullable: true
-        reference:
-          type: string
-          nullable: true
-        callbackEndpoint:
-          type: string
-        transactionIdInternal:
-          type: string
-        referenceInternal:
-          type: string
-
     InitiatePlanPaymentSuccessResponse:
       type: object
       properties:
@@ -279,112 +169,66 @@ components:
         message:
           type: string
         data:
-          allOf:
-            - $ref: '#/components/schemas/VirtualAccount'
-            - type: object
-              properties:
-                callbackEndpoint:
-                  type: string
-                transactionId:
-                  type: string
-                reference:
-                  type: string
+          type: object
+          properties:
+            link:
+              type: string
+              description: Flutterwave payment link for checkout
+            callbackEndpoint:
+              type: string
+            transactionId:
+              type: string
+            reference:
+              type: string
 
-    PaymentCallbackRequest:
+    PaymentCallbackRequestWithTxRef:
+      type: object
+      properties:
+        tx_ref:
+          type: string
+      required: [tx_ref]
+
+    PaymentCallbackRequestWithTransactionId:
       type: object
       properties:
         transactionId:
           type: string
       required: [transactionId]
 
-    TransactionStatus:
+    FlutterwaveVerificationWithReferenceResponse:
       type: object
       properties:
-        amount:
-          type: number
-        orderId:
+        status:
           type: string
-        description:
+          example: successful
+        message:
           type: string
-        isAmountDiscrepant:
-          type: boolean
-        amountSent:
-          type: number
-        nipTransaction:
+          example: Transaction fetched successfully
+        data:
           type: object
           properties:
             id:
+              type: number
+            tx_ref:
               type: string
-            transactionId:
-              type: string
-            transactionStatus:
-              type: string
-            bankcode:
-              type: string
-            craccount:
-              type: string
-        virtualAccount:
-          type: object
-          properties:
-            id:
-              type: string
-            transactionId:
-              type: string
-            status:
-              type: string
-            expiredAt:
-              type: string
-              format: date-time
             amount:
               type: number
             currency:
               type: string
-            orderId:
+            status:
               type: string
-        customer:
-          type: object
-          properties:
-            id:
+            customer:
+              type: object
+              properties:
+                email:
+                  type: string
+                name:
+                  type: string
+                phone_number:
+                  type: string
+            created_at:
               type: string
-            email:
-              type: string
-              format: email
-            phone:
-              type: string
-            firstName:
-              type: string
-            lastName:
-              type: string
-        isCallbackValidated:
-          type: boolean
-        id:
-          type: string
-        merchantId:
-          type: string
-        businessId:
-          type: string
-        currency:
-          type: string
-        status:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        ngnVirtualBankAccountNumber:
-          type: string
-          nullable: true
-        ngnVirtualBankCode:
-          type: string
-          nullable: true
-        usdVirtualAccountNumber:
-          type: string
-          nullable: true
-        usdVirtualBankCode:
-          type: string
-          nullable: true
+              format: date-time
 
     PaymentCallbackSuccessResponse:
       type: object
@@ -401,7 +245,7 @@ components:
             isValidated:
               type: boolean
             transaction:
-              $ref: '#/components/schemas/TransactionStatus'
+              $ref: '#/components/schemas/FlutterwaveVerificationWithReferenceResponse'
 
     ErrorResponse:
       type: object

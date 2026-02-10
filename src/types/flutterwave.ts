@@ -14,6 +14,7 @@ export interface PaymentInitializationData {
   tenantId: string
   redirectUrl: string
   payment_plan?: string
+  payment_options?: string
   metadata?: Record<string, any>
   reference?: string
   title?: string

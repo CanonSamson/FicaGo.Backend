@@ -10,6 +10,10 @@ const router = express.Router();
 
 router.post("/plans/initiate-payment", verifyUserToken, initiatePlanPayment);
 router.post("/plans/payment-callback", paymentCallback);
-router.get("/plans/check-status/:transactionId", verifyUserToken, checkPlanPaymentStatus);
+router.post(
+  "/plans/check-status/:transactionId",
+  verifyUserToken,
+  checkPlanPaymentStatus,
+);
 
 export { router as vendorPlansRoutes };
