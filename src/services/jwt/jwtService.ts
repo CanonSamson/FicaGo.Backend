@@ -4,7 +4,7 @@ import logger from '../../utils/logger.js'
 export interface TokenPayload {
   id: string
   role: 'VENDOR' | 'USER'
-  plan: 'FREE' | 'PRO' | 'ENTERPRISE'
+  planId?: string | null
 }
 
 export class JwtService {

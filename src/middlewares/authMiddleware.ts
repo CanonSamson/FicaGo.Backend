@@ -18,7 +18,7 @@ export const verifyUserToken = async (
     const decoded = jwtService.verifyToken(token)
     req.id = decoded.id 
     req.role = decoded.role
-    req.plan = decoded.plan
+    req.planId = decoded.planId
     next() // Proceed to the next middleware or route handler
   } catch (error) {
     res.status(401).json({ message: 'Invalid or expired token' })

@@ -9,4 +9,5 @@ export const EMAILS_FROM = {
 
 }
 
+
 export type EmailFrom = keyof typeof EMAILS_FROM

@@ -46,13 +46,74 @@ paths:
                   type: string
                 type:
                   type: string
+            examples:
+              vendorLogin:
+                summary: Vendor login verification
+                value:
+                  phoneNumber: "08031234567"
+                  otp: "123456"
+                  type: "VENDOR_LOGIN"
       responses:
         200:
-          description: OTP verified successfully
+          description: OTP verified successfully or login successful
+          content:
+            application/json:
+              oneOf:
+                - schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                    example:
+                      success: true
+                      message: OTP verified successfully
+                - schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                      data:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                          vendor:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              firstName:
+                                type: string
+                              lastName:
+                                type: string
+                              email:
+                                type: string
+                                format: email
+                              mobileNumber:
+                                type: string
+                              businessType:
+                                type: string
+                    example:
+                      success: true
+                      message: Login successful
+                      data:
+                        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        vendor:
+                          id: "65f0c7e..."
+                          firstName: "Jane"
+                          lastName: "Doe"
+                          email: "vendor@example.com"
+                          mobileNumber: "08031234567"
+                          businessType: "Services"
         400:
           description: Invalid OTP or expired
         500:
           description: Server error
+
 
   /ekyc/check-user:
     post:
@@ -149,6 +210,51 @@ paths:
 
 components:
   schemas:
+    VendorBasic:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        mobileNumber:
+          type: string
+        businessType:
+          type: string
+      required: [id, firstName, lastName, email, mobileNumber]
+    OtpVerifySuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: OTP verified successfully
+      required: [success, message]
+    LoginSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Login successful
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+            vendor:
+              $ref: '#/components/schemas/VendorBasic'
+      required: [success, message, data]
     EkycCheckUserResponse:
       type: object
       properties:

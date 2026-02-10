@@ -4,6 +4,7 @@ import prisma from "../../../prisma/prisma.js";
 import { generateOTP } from "../../utils/generateOTP.js";
 import moment from "moment";
 import { ekycService } from "../../services/ekycService.js";
+import { jwtService } from "../../services/jwt/jwtService.js";
 
 export const sendOtp = asyncWrapper(async (req, res) => {
   const { phoneNumber, type } = req.body;
@@ -153,10 +154,50 @@ export const verifyOtp = asyncWrapper(async (req, res) => {
       type,
     });
 
-    res.status(200).json({
+    // If this OTP is for login, issue JWT token
+    const isLogin = String(type).toUpperCase().includes("VENDOR_LOGIN")
+    if (isLogin) {
+      const vendor = await prisma.vendor.findFirst({
+        where: { mobileNumber: String(phoneNumber) },
+        include: {
+          currentPlan: true,
+        }
+      })
+
+      if (!vendor) {
+        return res.status(404).json({
+          success: false,
+          message: "Vendor not found",
+        })
+      }
+
+      const token = jwtService.generateToken({
+        id: vendor.id,
+        role: "VENDOR",
+        planId: vendor.currentPlan?.id || null
+      })
+
+      return res.status(200).json({
+        success: true,
+        message: "Login successful",
+        data: {
+          token,
+          vendor: {
+            id: vendor.id,
+            firstName: vendor.firstName,
+            lastName: vendor.lastName,
+            email: vendor.email,
+            mobileNumber: vendor.mobileNumber,
+            businessType: vendor.businessType,
+          },
+        },
+      })
+    }
+
+    return res.status(200).json({
       success: true,
       message: "OTP verified successfully",
-    });
+    })
   } catch (error) {
     logger.error("Failed to verify OTP", {
       error,
