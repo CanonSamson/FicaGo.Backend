@@ -28,6 +28,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth": "^1.0.45",
     "axios": "^1.12.2",
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "esbuild": "^0.25.0",
@@ -39,6 +40,7 @@
     "moment-timezone": "^0.6.0",
     "mongoose": "^8.9.5",
     "morgan": "^1.10.0",
+    "multer": "^2.0.2",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.10.0",
     "passport": "^0.7.0",
@@ -53,6 +55,7 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.0.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "jest": "^30.2.0",

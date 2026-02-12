@@ -4,6 +4,16 @@ model Vendor {
   lastName            String
   email               String               @unique
   businessType        String
+  vendorType          String?
+  cacCertificateUrl   String?
+  registrationType    String?
+  rcNumber            String?
+  registeredBusinessName String?
+  taxIdentificationNumber String?
+  selfieImage             String?
+  identificationType      String?
+  identificationNumber    String?
+  gender                  String?
   mobileNumber        String
   serviceCategory     String
   skills              String[]
@@ -11,7 +21,36 @@ model Vendor {
   currentPlan         Plan?                @relation(fields: [currentPlanId], references: [id])
   planStartedAt       DateTime?
   planExpiresAt       DateTime?
+  onboardingStatus    String               @default("in_progress")
   createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  vendorSubscriptions VendorSubscription[]
+  updatedAt               DateTime             @updatedAt
+  vendorSubscriptions     VendorSubscription[]
+  bankAccount             VendorBankAccount?
+  services                Service[]
+}
+
+model VendorBankAccount {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  bankName      String
+  accountNumber String
+  accountName   String
+  vendorId      String   @unique @db.ObjectId
+  vendor        Vendor   @relation(fields: [vendorId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Service {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  vendorId     String   @db.ObjectId
+  vendor       Vendor   @relation(fields: [vendorId], references: [id])
+  title        String
+  description  String
+  averagePrice Float
+  currency     String   @default("NGN")
+  category     String
+  imageUrl     String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

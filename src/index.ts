@@ -20,6 +20,9 @@ import { vendorPlansRoutes } from "./routes/vendor/vendorPlansRoutes.js";
 import vendorOnboardingRoutes from "./routes/vendor/vendorOnBoardingRoutes.js";
 import { webhookRoutes } from "./routes/webhook.js";
 import { vendorRoutes } from "./routes/vendor/vendorRoutes.js";
+import { serviceRoutes } from "./routes/vendor/serviceRoutes.js";
+import { v2 as cloudinary } from "cloudinary";
+import { uploadFileRoutes } from "./routes/uploadFileRoutes.js";
 
 // import admin from 'firebase-admin'
 
@@ -91,6 +94,12 @@ async function startServer() {
 
     const PORT = process.env.PORT;
 
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
     // Apply middleware
     app.use(loggingMiddleware);
     app.use(configureCors());
@@ -119,10 +128,13 @@ async function startServer() {
     app.use("/v1/api/vendor", vendorOnboardingRoutes);
     app.use("/v1/api/vendor", vendorRoutes);
     app.use("/v1/api/vendor", vendorPlansRoutes);
+    app.use("/v1/api/vendor", serviceRoutes);
     app.use("/v1/api/ekyc", otpRoutes);
     app.use("/v1/api/plans", planRoutes);
     app.get("/health", healthCheck);
     app.use("/v1/api/webhook", webhookRoutes);
+    app.use('/v1/api/upload-file', uploadFileRoutes)
+
 
     app.use(
       session({

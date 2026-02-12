@@ -11,7 +11,11 @@ const options = {
     servers: [
       {
         url: '/v1/api',
-        description: 'Development server',
+        description: 'Versioned API server',
+      },
+      {
+        url: '/',
+        description: 'Root server',
       },
     ],    components: {
       securitySchemes: {

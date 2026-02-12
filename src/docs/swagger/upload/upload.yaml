@@ -1,0 +1,260 @@
+paths:
+  /upload-file/file:
+    post:
+      summary: Upload a single file
+      description: Uploads a single file using the form field name 'file'. Returns the Cloudinary URL and file metadata.
+      tags: [Upload]
+      security: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+            examples:
+              sample:
+                summary: Upload one file
+                value:
+                  file: (binary)
+      responses:
+        200:
+          description: Uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSingleResponse'
+        400:
+          description: No file uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                noFile:
+                  value:
+                    success: false
+                    message: No file uploaded
+        500:
+          description: Error uploading file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /upload-file/files:
+    post:
+      summary: Upload multiple files
+      description: Uploads up to 10 files using the form field name 'files'. Returns a list of Cloudinary URLs.
+      tags: [Upload]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [files]
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+            examples:
+              sample:
+                summary: Upload multiple files
+                value:
+                  files: [(binary), (binary)]
+      responses:
+        200:
+          description: Files uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadMultipleResponse'
+        400:
+          description: No files uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                noFiles:
+                  value:
+                    success: false
+                    message: No files uploaded
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid or expired token
+        500:
+          description: Error uploading files
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /upload-file/get-signed-url:
+    post:
+      summary: Generate a Cloudinary private signed download URL
+      description: Validates the resource existence in Cloudinary and returns a private signed URL.
+      tags: [Upload]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [publicId]
+              properties:
+                publicId:
+                  type: string
+                  description: Cloudinary public ID of the resource
+                resourceType:
+                  type: string
+                  description: Cloudinary resource type
+                  enum: [raw, image, video, auto]
+                  default: raw
+            examples:
+              sample:
+                value:
+                  publicId: twezimbe/files/file-123456789
+                  resourceType: raw
+      responses:
+        200:
+          description: Signed URL generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedUrlResponse'
+        400:
+          description: publicId is required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingPublicId:
+                  value:
+                    success: false
+                    message: publicId is required
+        404:
+          description: Resource not found in Cloudinary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: Error generating signed URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /upload-file/download:
+    get:
+      summary: Download a file by publicId
+      description: Endpoint placeholder. Not implemented.
+      tags: [Upload]
+      parameters:
+        - in: query
+          name: publicId
+          required: false
+          schema:
+            type: string
+          description: Cloudinary public ID of the resource
+      responses:
+        501:
+          description: Not implemented
+
+components:
+  schemas:
+    UploadSingleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Uploaded successfully
+        url:
+          type: string
+          example: https://res.cloudinary.com/demo/raw/upload/v1700000000/twezimbe/files/file-123.pdf
+        file:
+          type: object
+          properties:
+            url:
+              type: string
+            originalname:
+              type: string
+              example: document.pdf
+            size:
+              type: integer
+              format: int64
+              example: 34567
+      required: [success, message, url, file]
+
+    UploadMultipleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Files uploaded successfully
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              originalName:
+                type: string
+                example: image.png
+              url:
+                type: string
+                example: https://res.cloudinary.com/demo/raw/upload/v1700000000/twezimbe/files/img-123.png
+              size:
+                type: integer
+                format: int64
+                example: 123456
+      required: [success, message, files]
+
+    SignedUrlResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        url:
+          type: string
+          example: https://res.cloudinary.com/demo/raw/private/v1700000000/twezimbe/files/file-123.pdf?sig=abc123
+      required: [success, url]
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error message
+        error:
+          nullable: true
+          description: Optional error details
+      required: [success, message]

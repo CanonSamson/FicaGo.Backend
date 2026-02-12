@@ -1,0 +1,395 @@
+paths:
+  /vendor/me:
+    get:
+      summary: Get current vendor profile
+      description: Returns the authenticated vendor's profile.
+      tags: [Vendor]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Vendor profile fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Vendor profile fetched successfully
+                  data:
+                    $ref: '#/components/schemas/Vendor'
+        401:
+          description: Unauthorized
+        404:
+          description: Vendor not found
+        500:
+          description: Failed to fetch vendor profile
+    patch:
+      summary: Update current vendor details
+      description: Partially updates the authenticated vendor's details.
+      tags: [Vendor]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVendorDetailsRequest'
+            examples:
+              updateVendorType:
+                value:
+                  vendorType: registered
+              updateProfile:
+                value:
+                  firstName: Jane
+                  lastName: Doe
+                  mobileNumber: "08031234567"
+                  businessType: Services
+                  serviceCategory: Cleaning
+                  skills: ["Sanitation", "Waste Disposal"]
+      responses:
+        200:
+          description: Vendor details updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Vendor details updated successfully
+                  data:
+                    $ref: '#/components/schemas/Vendor'
+        401:
+          description: Unauthorized
+        404:
+          description: Vendor not found
+        500:
+          description: Failed to update vendor details
+
+  /vendor/upgrade/registered:
+    post:
+      summary: Upgrade vendor to registered
+      description: Upgrades the vendor to a registered business and saves registration details.
+      tags: [Vendor]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeToRegisteredRequest'
+            examples:
+              sample:
+                value:
+                  cacCertificate: https://cdn.example.com/docs/cac-123.pdf
+                  registrationType: RC
+                  rcNumber: RC123456
+                  registeredBusinessName: Ficago Services Ltd
+                  taxIdentificationNumber: TIN-998877
+      responses:
+        200:
+          description: Vendor upgraded to registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Vendor upgraded to registered successfully
+                  data:
+                    $ref: '#/components/schemas/Vendor'
+        401:
+          description: Unauthorized
+        404:
+          description: Vendor not found
+        500:
+          description: Failed to upgrade vendor
+
+  /vendor/complete-profile:
+    post:
+      summary: Complete vendor profile
+      description: Completes the vendor profile with identification and demographic details.
+      tags: [Vendor]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteVendorProfileRequest'
+            examples:
+              sample:
+                value:
+                  vendorType: freelancer
+                  selfieImage: https://cdn.example.com/images/selfies/abc123.jpg
+                  identificationType: NIN
+                  identificationNumber: 12345678901
+                  taxIdentificationNumber: TIN-123456
+                  gender: female
+      responses:
+        200:
+          description: Vendor profile completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Vendor profile completed successfully
+                  data:
+                    $ref: '#/components/schemas/Vendor'
+        401:
+          description: Unauthorized
+        404:
+          description: Vendor not found
+        500:
+          description: Failed to complete vendor profile
+
+  /vendor/bank-account:
+    post:
+      summary: Set up vendor bank account
+      description: Creates or updates the vendor's settlement bank account.
+      tags: [Vendor]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankAccountRequest'
+            examples:
+              sample:
+                value:
+                  bankName: Wema Bank
+                  accountNumber: "0123456789"
+                  accountName: Ficago Services Ltd
+      responses:
+        200:
+          description: Bank account details saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Bank account details saved successfully
+                  data:
+                    $ref: '#/components/schemas/VendorBankAccount'
+        401:
+          description: Unauthorized
+        500:
+          description: Failed to set up bank account
+
+components:
+  schemas:
+    Vendor:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "65f0c7e..."
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Doe
+        email:
+          type: string
+          format: email
+          example: vendor@example.com
+        businessType:
+          type: string
+          example: Services
+        vendorType:
+          type: string
+          nullable: true
+          enum: [registered, not_registered, freelancer]
+        cacCertificateUrl:
+          type: string
+          nullable: true
+        registrationType:
+          type: string
+          nullable: true
+        rcNumber:
+          type: string
+          nullable: true
+        registeredBusinessName:
+          type: string
+          nullable: true
+        taxIdentificationNumber:
+          type: string
+          nullable: true
+        selfieImage:
+          type: string
+          nullable: true
+        identificationType:
+          type: string
+          nullable: true
+        identificationNumber:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        mobileNumber:
+          type: string
+          example: "08031234567"
+        serviceCategory:
+          type: string
+          example: Cleaning
+        skills:
+          type: array
+          items:
+            type: string
+          example: ["Sanitation", "Waste Disposal"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - mobileNumber
+        - businessType
+        - serviceCategory
+        - skills
+
+    VendorBankAccount:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "66a1b2c..."
+        bankName:
+          type: string
+          example: Wema Bank
+        accountNumber:
+          type: string
+          example: "0123456789"
+        accountName:
+          type: string
+          example: Ficago Services Ltd
+        vendorId:
+          type: string
+          example: "65f0c7e..."
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - bankName
+        - accountNumber
+        - accountName
+        - vendorId
+
+    UpgradeToRegisteredRequest:
+      type: object
+      required:
+        - cacCertificate
+        - registrationType
+        - rcNumber
+        - registeredBusinessName
+        - taxIdentificationNumber
+      properties:
+        cacCertificate:
+          type: string
+          description: URL of the CAC certificate document
+        registrationType:
+          type: string
+        rcNumber:
+          type: string
+        registeredBusinessName:
+          type: string
+        taxIdentificationNumber:
+          type: string
+
+    CompleteVendorProfileRequest:
+      type: object
+      required:
+        - vendorType
+        - selfieImage
+        - identificationType
+        - identificationNumber
+        - taxIdentificationNumber
+        - gender
+      properties:
+        vendorType:
+          type: string
+          enum: [registered, not_registered, freelancer]
+        selfieImage:
+          type: string
+        identificationType:
+          type: string
+        identificationNumber:
+          type: string
+        taxIdentificationNumber:
+          type: string
+        gender:
+          type: string
+
+    BankAccountRequest:
+      type: object
+      required:
+        - bankName
+        - accountNumber
+        - accountName
+      properties:
+        bankName:
+          type: string
+        accountNumber:
+          type: string
+        accountName:
+          type: string
+
+    UpdateVendorDetailsRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        mobileNumber:
+          type: string
+        businessType:
+          type: string
+        vendorType:
+          type: string
+          enum: [registered, not_registered, freelancer]
+        serviceCategory:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string

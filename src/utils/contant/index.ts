@@ -11,3 +11,6 @@ export const EMAILS_FROM = {
 
 
 export type EmailFrom = keyof typeof EMAILS_FROM
+
+export const VENDOR_TYPES = ['registered', 'not_registered', 'freelancer'] as const
+export type VendorType = typeof VENDOR_TYPES[number]
