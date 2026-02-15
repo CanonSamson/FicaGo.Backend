@@ -7,7 +7,7 @@ import { ekycService } from "../../services/ekycService.js";
 import { jwtService } from "../../services/jwt/jwtService.js";
 
 export const sendOtp = asyncWrapper(async (req, res) => {
-  const { phoneNumber, type } = req.body;
+  const { email, phoneNumber, type } = req.body;
 
   if (!phoneNumber || !type) {
     return res.status(400).json({
@@ -17,29 +17,35 @@ export const sendOtp = asyncWrapper(async (req, res) => {
   }
 
   // Check if user exists based on type
-  if (type === 'VENDOR_REGISTRATION' || type === 'VENDOR_LOGIN') {
-    const userCheck = await ekycService.checkUserExists(undefined, phoneNumber)
-    
+  if (type === "VENDOR_REGISTRATION" || type === "VENDOR_LOGIN") {
+    const userCheck = await ekycService.checkUserExists(
+      email || undefined,
+      phoneNumber,
+    );
+
     if (userCheck.code !== 200) {
       return res.status(userCheck.code).json({
-         success: false,
-         message: userCheck.message,
-         error: userCheck.error
-      })
+        success: false,
+        message: userCheck.message,
+        error: userCheck.error,
+      });
     }
 
-    if (type === 'VENDOR_REGISTRATION' && userCheck.data?.exists) {
+    if (type === "VENDOR_REGISTRATION" && userCheck.data?.exists) {
       return res.status(400).json({
         success: false,
-        message: 'User with this phone number already exists'
-      })
+        message:
+          userCheck.data?.field === "email"
+            ? "User with this email already exists"
+            : "User with this phone number already exists",
+      });
     }
 
-    if (type === 'VENDOR_LOGIN' && !userCheck.data?.exists) {
+    if (type === "VENDOR_LOGIN" && !userCheck.data?.exists) {
       return res.status(400).json({
         success: false,
-        message: 'User with this phone number does not exist'
-      })
+        message: "User with this phone number does not exist",
+      });
     }
   }
 
@@ -155,27 +161,27 @@ export const verifyOtp = asyncWrapper(async (req, res) => {
     });
 
     // If this OTP is for login, issue JWT token
-    const isLogin = String(type).toUpperCase().includes("VENDOR_LOGIN")
+    const isLogin = String(type).toUpperCase().includes("VENDOR_LOGIN");
     if (isLogin) {
       const vendor = await prisma.vendor.findFirst({
         where: { mobileNumber: String(phoneNumber) },
         include: {
           currentPlan: true,
-        }
-      })
+        },
+      });
 
       if (!vendor) {
         return res.status(404).json({
           success: false,
           message: "Vendor not found",
-        })
+        });
       }
 
       const token = jwtService.generateToken({
         id: vendor.id,
         role: "VENDOR",
-        planId: vendor.currentPlan?.id || null
-      })
+        planId: vendor.currentPlan?.id || null,
+      });
 
       return res.status(200).json({
         success: true,
@@ -191,13 +197,13 @@ export const verifyOtp = asyncWrapper(async (req, res) => {
             businessType: vendor.businessType,
           },
         },
-      })
+      });
     }
 
     return res.status(200).json({
       success: true,
       message: "OTP verified successfully",
-    })
+    });
   } catch (error) {
     logger.error("Failed to verify OTP", {
       error,

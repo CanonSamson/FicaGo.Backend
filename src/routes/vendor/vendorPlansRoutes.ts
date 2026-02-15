@@ -1,6 +1,7 @@
 import express from "express";
 import { verifyUserToken } from "../../middlewares/authMiddleware.js";
 import {
+  getVendorPlanSubscriptions,
   initiatePlanPayment,
   paymentCallback,
   checkPlanPaymentStatus,
@@ -8,6 +9,7 @@ import {
 
 const router = express.Router();
 
+router.get("/plans/subscriptions", verifyUserToken, getVendorPlanSubscriptions);
 router.post("/plans/initiate-payment", verifyUserToken, initiatePlanPayment);
 router.post("/plans/payment-callback", paymentCallback);
 router.post(

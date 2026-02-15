@@ -7,6 +7,58 @@ import { subscriptionService } from "../../../services/vendor/subscriptionServic
 import { flutterwaveService } from "../../../services/flutterwave/index.js";
 import { PaymentInitializationData } from "../../../types/flutterwave.js";
 
+export const getVendorPlanSubscriptions = asyncWrapper(
+  async (req: Request, res: Response) => {
+    const vendorId = req?.id as string;
+    const requestId = Math.random().toString(36).substring(7);
+
+    try {
+      const subscriptions = await prisma.vendorSubscription.findMany({
+        where: { vendorId },
+        include: { plan: true },
+        orderBy: { startedAt: "desc" },
+      });
+
+      logger.info("Fetched vendor subscriptions", {
+        requestId,
+        vendorId,
+        count: subscriptions.length,
+      });
+
+      const data = subscriptions.map((s) => ({
+        id: s.id,
+        status: s.status,
+        startedAt: s.startedAt,
+        expiresAt: s.expiresAt,
+        canceledAt: s.canceledAt,
+        plan: {
+          id: s.plan.id,
+          name: s.plan.name,
+          price: s.plan.price,
+          currency: s.plan.currency,
+          interval: s.plan.interval,
+        },
+      }));
+
+      res.status(200).json({
+        success: true,
+        message: "Vendor subscriptions fetched successfully",
+        data,
+      });
+    } catch (error: any) {
+      logger.error("Failed to fetch vendor subscriptions", {
+        requestId,
+        vendorId,
+        error: error.message,
+      });
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch vendor subscriptions",
+      });
+    }
+  }
+);
+
 export const initiatePlanPayment = asyncWrapper(
   async (req: Request, res: Response) => {
     const { planId } = req.body || {};

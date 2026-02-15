@@ -112,6 +112,7 @@ async function startServer() {
     // Create HTTP server and Socket.IO instance
     const server = http.createServer(app);
     const io = new Server(server, {
+      path: '/ws/',
       cors: {
         origin: "*",
         methods: ["GET", "POST"],

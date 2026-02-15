@@ -394,3 +394,83 @@ export const getOnboardingStatus = asyncWrapper(
     });
   },
 );
+
+export const getOnboardingStepStatuses = asyncWrapper(
+  async (req: Request, res: Response) => {
+    const vendorId = req.id;
+    if (!vendorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: Vendor ID not found in token",
+      });
+    }
+
+    const vendor = await prisma.vendor.findUnique({
+      where: { id: vendorId },
+      include: { bankAccount: true, services: true },
+    });
+
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    const profileFields = [
+      vendor.vendorType,
+      vendor.selfieImage,
+      vendor.identificationType,
+      vendor.identificationNumber,
+      vendor.taxIdentificationNumber,
+      vendor.gender,
+    ];
+    const profileAll = profileFields.every(Boolean);
+    const profileAny = profileFields.some(Boolean);
+
+    const bankFields = [
+      vendor.bankAccount?.bankName,
+      vendor.bankAccount?.accountName,
+      vendor.bankAccount?.accountNumber,
+    ];
+    const bankAll = bankFields.every(Boolean);
+    const bankAny = bankFields.some(Boolean);
+
+    const verificationFields = [
+      vendor.cacCertificateUrl,
+      vendor.registrationType,
+      vendor.rcNumber,
+      vendor.registeredBusinessName,
+      vendor.taxIdentificationNumber,
+    ];
+    const isRegistered = vendor.vendorType === "registered";
+    const verificationAll = isRegistered ? verificationFields.every(Boolean) : true;
+    const verificationAny = isRegistered ? verificationFields.some(Boolean) : true;
+
+    const servicesCount = vendor.services?.length ?? 0;
+
+    const status = (all: boolean, any: boolean) =>
+      all ? "complete" : any ? "started" : "not_started";
+
+    const steps = {
+      account_created: "complete" as const,
+      verify_business: status(verificationAll, verificationAny),
+      complete_profile: status(profileAll, profileAny),
+      settlement_account: status(bankAll, bankAny),
+      add_services: servicesCount > 0 ? "complete" : "not_started",
+    };
+
+    const allDone =
+      steps.complete_profile === "complete" &&
+      steps.settlement_account === "complete" &&
+      steps.add_services === "complete" &&
+      (isRegistered ? steps.verify_business === "complete" : true);
+
+    res.status(200).json({
+      success: true,
+      message: "Onboarding step statuses fetched",
+      data: {
+        steps,
+        allDone,
+        onboardingStatus: vendor.onboardingStatus,
+      },
+    });
+  }
+);
