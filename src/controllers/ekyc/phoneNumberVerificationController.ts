@@ -188,14 +188,7 @@ export const verifyOtp = asyncWrapper(async (req, res) => {
         message: "Login successful",
         data: {
           token,
-          vendor: {
-            id: vendor.id,
-            firstName: vendor.firstName,
-            lastName: vendor.lastName,
-            email: vendor.email,
-            mobileNumber: vendor.mobileNumber,
-            businessType: vendor.businessType,
-          },
+          vendor: vendor,
         },
       });
     }
