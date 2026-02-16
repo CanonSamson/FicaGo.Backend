@@ -5,6 +5,7 @@ import { generateOTP } from "../../utils/generateOTP.js";
 import moment from "moment";
 import { ekycService } from "../../services/ekycService.js";
 import { jwtService } from "../../services/jwt/jwtService.js";
+import { twilioService } from "../../services/twilio/index.js";
 
 export const sendOtp = asyncWrapper(async (req, res) => {
   const { email, phoneNumber, type } = req.body;
@@ -84,6 +85,18 @@ export const sendOtp = asyncWrapper(async (req, res) => {
     // In a real scenario, we would send the OTP via SMS here.
     // For now, we return it in the response as requested.
 
+    if (process.env.ENVIRONMENT === "production") {
+      await twilioService.sendVerificationCode(String(phoneNumber), "sms");
+      return res.status(200).json({
+        success: true,
+        message: "OTP sent successfully",
+        data: {
+          phoneNumber,
+          type,
+          expiresAt,
+        },
+      });
+    }
     res.status(200).json({
       success: true,
       message: "OTP generated successfully",

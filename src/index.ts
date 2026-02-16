@@ -154,6 +154,7 @@ async function startServer() {
       cb(null, user);
     });
 
+    
     // Apply error handling
     app.use(errorHandler);
 
