@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import asyncWrapper from "../../middlewares/asyncWrapper.js";
 import logger from "../../utils/logger.js";
 import prisma from "../../../prisma/prisma.js";
+import { computeOnboardingFlags } from "../../services/vendorOnboardingService.js";
 
 export const getCurrentVendor = asyncWrapper(
   async (req: Request, res: Response) => {
@@ -312,16 +313,12 @@ export const submitOnboardingForReview = asyncWrapper(
       return res.status(404).json({ success: false, message: "Vendor not found" });
     }
 
-    const hasProfile =
-      !!vendor.vendorType &&
-      !!vendor.selfieImage &&
-      !!vendor.identificationType &&
-      !!vendor.identificationNumber &&
-      !!vendor.gender;
-    const hasBank = !!vendor.bankAccount;
-    const hasServices = (vendor.services?.length ?? 0) > 0;
-    const requiresVerification = vendor.vendorType === "registered";
-    const hasVerification = !requiresVerification || !!vendor.cacCertificateUrl;
+    const {
+      hasProfile,
+      hasBank,
+      hasServices,
+      hasVerification,
+    } = computeOnboardingFlags(vendor);
 
     if (!(hasProfile && hasBank && hasServices && hasVerification)) {
       return res.status(400).json({
@@ -349,6 +346,10 @@ export const submitOnboardingForReview = asyncWrapper(
   },
 );
 
+
+
+
+
 export const getOnboardingStatus = asyncWrapper(
   async (req: Request, res: Response) => {
     const vendorId = req.id;
@@ -369,17 +370,13 @@ export const getOnboardingStatus = asyncWrapper(
       return res.status(404).json({ success: false, message: "Vendor not found" });
     }
 
-    const hasProfile =
-      !!vendor.vendorType &&
-      !!vendor.selfieImage &&
-      !!vendor.identificationType &&
-      !!vendor.identificationNumber &&
-      !!vendor.gender &&
-      !!vendor.taxIdentificationNumber;
-    const hasBank = !!vendor.bankAccount;
-    const hasServices = (vendor.services?.length ?? 0) > 0;
-    const requiresVerification = vendor.vendorType === "registered";
-    const hasVerification = !requiresVerification || !!vendor.cacCertificateUrl;
+    const {
+      hasProfile,
+      hasBank,
+      hasServices,
+      requiresVerification,
+      hasVerification,
+    } = computeOnboardingFlags(vendor);
 
     res.status(200).json({
       success: true,
@@ -470,6 +467,54 @@ export const getOnboardingStepStatuses = asyncWrapper(
         steps,
         allDone,
         onboardingStatus: vendor.onboardingStatus,
+      },
+    });
+  }
+);
+
+export const getProfileCompletionPercent = asyncWrapper(
+  async (req: Request, res: Response) => {
+    const vendorId = req.id;
+    if (!vendorId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: Vendor ID not found in token",
+      });
+    }
+
+    const vendor = await prisma.vendor.findUnique({
+      where: { id: vendorId },
+    });
+
+    if (!vendor) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Vendor not found" });
+    }
+
+    const fields = [
+      vendor.vendorType,
+      vendor.selfieImage,
+      vendor.identificationType,
+      vendor.identificationNumber,
+      vendor.taxIdentificationNumber,
+      vendor.gender,
+    ];
+
+    const total = fields.length;
+    const completed = fields.filter(Boolean).length;
+    const percentage = Math.max(
+      0,
+      Math.min(100, Math.round((completed / total) * 100)),
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Profile completion percentage fetched",
+      data: {
+        percentage,
+        totalFields: total,
+        completedFields: completed,
       },
     });
   }

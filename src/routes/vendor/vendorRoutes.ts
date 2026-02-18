@@ -9,6 +9,7 @@ import {
   submitOnboardingForReview,
   getOnboardingStatus,
   getOnboardingStepStatuses,
+  getProfileCompletionPercent,
 } from "../../controllers/vendor/vendorController.js";
 import { verifyUserToken } from "../../middlewares/authMiddleware.js";
 import { validateUpgradeToRegistered, validateVendorProfileCompletion, validateBankAccount } from "../../middlewares/vendorValidation.js";
@@ -23,5 +24,6 @@ router.post("/bank-account", verifyUserToken, validateBankAccount, setupBankAcco
 router.post("/onboarding/submit", verifyUserToken, submitOnboardingForReview);
 router.get("/onboarding/status", verifyUserToken, getOnboardingStatus);
 router.get("/onboarding/steps", verifyUserToken, getOnboardingStepStatuses);
+router.get("/profile/completion", verifyUserToken, getProfileCompletionPercent);
 
 export const vendorRoutes = router;
