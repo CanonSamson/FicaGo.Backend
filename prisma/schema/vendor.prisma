@@ -1,28 +1,29 @@
 model Vendor {
-  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
-  firstName           String
-  lastName            String
-  email               String               @unique
-  businessType        String
-  vendorType          String?
-  cacCertificateUrl   String?
-  registrationType    String?
-  rcNumber            String?
-  registeredBusinessName String?
+  id                      String               @id @default(auto()) @map("_id") @db.ObjectId
+  firstName               String
+  lastName                String
+  email                   String               @unique
+  businessType            String
+  vendorType              String?
+  cacCertificateUrl       String?
+  registrationType        String?
+  rcNumber                String?
+  registeredBusinessName  String?
   taxIdentificationNumber String?
   selfieImage             String?
   identificationType      String?
   identificationNumber    String?
   gender                  String?
-  mobileNumber        String
-  serviceCategory     String
-  skills              String[]
-  currentPlanId       String?              @db.ObjectId
-  currentPlan         Plan?                @relation(fields: [currentPlanId], references: [id])
-  planStartedAt       DateTime?
-  planExpiresAt       DateTime?
-  onboardingStatus    String               @default("in_progress")
-  createdAt           DateTime             @default(now())
+  businessVerification    String?
+  mobileNumber            String
+  serviceCategory         String
+  skills                  String[]
+  currentPlanId           String?              @db.ObjectId
+  currentPlan             Plan?                @relation(fields: [currentPlanId], references: [id])
+  planStartedAt           DateTime?
+  planExpiresAt           DateTime?
+  onboardingStatus        String               @default("in_progress")
+  createdAt               DateTime             @default(now())
   updatedAt               DateTime             @updatedAt
   vendorSubscriptions     VendorSubscription[]
   bankAccount             VendorBankAccount?
