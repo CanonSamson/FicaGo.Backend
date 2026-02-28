@@ -23,6 +23,7 @@ import { vendorRoutes } from "./routes/vendor/vendorRoutes.js";
 import { serviceRoutes } from "./routes/vendor/serviceRoutes.js";
 import { v2 as cloudinary } from "cloudinary";
 import { uploadFileRoutes } from "./routes/uploadFileRoutes.js";
+import userRoutes from "./routes/user/userRoutes.js";
 
 // import admin from 'firebase-admin'
 
@@ -135,6 +136,7 @@ async function startServer() {
     app.get("/health", healthCheck);
     app.use("/v1/api/webhook", webhookRoutes);
     app.use('/v1/api/upload-file', uploadFileRoutes)
+    app.use("/v1/api/user", userRoutes);
 
 
     app.use(
